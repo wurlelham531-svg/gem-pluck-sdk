@@ -1,0 +1,54 @@
+name: bump
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 */6 * * *"
+
+permissions:
+  contents: write
+
+jobs:
+  bump-and-publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Install
+        run: npm ci || npm install
+
+      - name: Build
+        run: npm run build
+
+      - name: Bump patch
+        id: bump
+        run: |
+          NEW_VERSION=$(npm version patch --no-git-tag-version)
+          echo "version=${NEW_VERSION}" >> $GITHUB_OUTPUT
+          echo "Bumped to ${NEW_VERSION}"
+
+      - name: Publish to npm
+        run: npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Commit and tag
+        run: |
+          git add package.json package-lock.json || git add package.json
+          git commit -m "chore: release ${{ steps.bump.outputs.version }}"
+          git tag ${{ steps.bump.outputs.version }}
+          git push origin HEAD:main
+          git push origin ${{ steps.bump.outputs.version }}
