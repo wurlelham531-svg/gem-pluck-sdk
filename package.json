@@ -1,6 +1,6 @@
 {
   "name": "gem-pluck-sdk",
-  "version": "1.0.77",
+  "version": "1.0.78",
   "description": "TypeScript SDK for interacting with the Gem Pluck smart contract on Stacks blockchain",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
